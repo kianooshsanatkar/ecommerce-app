@@ -331,3 +331,7 @@ pip-selfcheck.json
 *.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/python,flask,vscode,pycharm,venv
+
+
+# all file in .idea
+.idea
