@@ -335,3 +335,6 @@ pip-selfcheck.json
 
 # all file in .idea
 .idea
+
+#all file in .vscode
+.vscode
