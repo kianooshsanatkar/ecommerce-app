@@ -14,10 +14,13 @@ class DBInitializer:
     @classmethod
     def get_engine(cls):
         if cls.__engine is None:
-            from sqlalchemy import create_engine
-            engine = create_engine('postgresql://numen:pass1234@localhost/NumenDB', echo=True)
-            cls.__engine = engine
+            cls.__engine = cls.get_new_engine()
         return cls.__engine
+
+    @classmethod
+    def get_new_engine(cls):
+        from sqlalchemy import create_engine
+        return create_engine('postgresql://numen:pass1234@localhost/NumenDB', echo=False)
 
     @classmethod
     def get_session(cls) -> Session:
