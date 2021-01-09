@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from core.logging import ValueException, TypeException
+from core.exceptions import ValueException, TypeException
 
 
 class ExceptionTests(TestCase):
