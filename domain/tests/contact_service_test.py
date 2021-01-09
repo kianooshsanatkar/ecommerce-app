@@ -37,7 +37,6 @@ class EmailServiceTest(TestCase):
         self.assertRaises(ValueException, lambda: email_validation('sample@domain.' + 't' * 65))
 
     def test_email_validation_value_exception_local_name(self):
-        # self.assertRaises(ValueException, lambda: email_validation("_sample@domain.com"))
         # self.assertRaises(ValueException, lambda: email_validation("1234sample@domain.com"))
         # self.assertRaises(ValueException, lambda: email_validation(".samplesample@domain.com"))
         self.assertRaises(ValueException, lambda: email_validation("_sample@domain.com"))
