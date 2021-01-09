@@ -1,7 +1,5 @@
 from sqlalchemy import Column, Integer
 
-from ._db import Base
 
-
-class Entity(Base):
+class Entity:
     uid = Column(Integer, primary_key=True, unique=True, autoincrement=True)
