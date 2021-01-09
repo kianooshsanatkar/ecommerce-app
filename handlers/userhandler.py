@@ -26,8 +26,9 @@ class UserHandler:
         return session.query(User).filter_by(email=email).first()
 
     @classmethod
-    def create_user(cls, user: User):
+    def create_user(cls, user: User) -> int:
         cls.user_validation(user)
         session = cls.Session()
         session.add(user)
         session.commit()
+        return user.uid
