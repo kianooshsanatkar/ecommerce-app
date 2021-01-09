@@ -8,3 +8,7 @@ class ValueException(InnerException, ValueError):
 
 class TypeException(InnerException, TypeError):
     pass
+
+
+class AuthenticationException(InnerException):
+    pass
