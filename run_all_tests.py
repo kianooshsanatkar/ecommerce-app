@@ -4,6 +4,7 @@ test_package_list = [
     'core/tests',
     'domain/tests',
     'handlers/tests',
+    'integration_tests'
 ]
 
 if __name__ == '__main__':
