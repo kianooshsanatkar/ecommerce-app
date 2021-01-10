@@ -19,7 +19,7 @@ class CreateUserHandlerTest(TestCase):
 
     def setUp(self) -> None:
         self.factory = Mock()
-        UserHandler.Session = self.factory.session
+        UserHandler._Session = self.factory.session
 
     def test_get_user_by_id(self):
         # check if exception rises for the wrong data type
@@ -38,24 +38,42 @@ class CreateUserHandlerTest(TestCase):
         self.assertEqual("email parameter type must be string!", str(_ex.exception))
 
         # check if email validation is called
-        UserHandler.email_validation = self.factory.email_validation
+        UserHandler._email_validation = self.factory.email_validation
         UserHandler.get_user_by_email('email')
         self.factory.email_validation.assert_called()
 
         # check if session and query is called
-        UserHandler.email_validation = self.factory.email_validation
+        UserHandler._email_validation = self.factory.email_validation
         UserHandler.get_user_by_email('email')
         self.factory.session.assert_called()
         self.factory.session().query.assert_called()
 
     def test_create_user_does_validation_called(self):
-        UserHandler.user_validation = self.factory.validation
+        UserHandler._user_validation = self.factory.validation
+        UserHandler._hashing = self.factory._hashing
         UserHandler.create_user(Mock())
         self.factory.validation.assert_called()
 
     def test_create_user_does_add_and_commit_called(self):
-        UserHandler.user_validation = self.factory.validation
+        UserHandler._user_validation = self.factory.validation
+        UserHandler._hashing = self.factory._hashing
         UserHandler.create_user(Mock())
         self.factory.session.assert_called()
         self.factory.session().add.assert_called()
         self.factory.session().commit.assert_called()
+
+    def test_create_user_is_password_hashing_called(self):
+        UserHandler._hashing = self.factory.hashing
+        UserHandler._user_validation = self.factory.validation
+        UserHandler.create_user(Mock())
+        self.factory.hashing.assert_called()
+        self.factory.session.assert_called()
+
+    def test_get_user_by_id_should_not_return_password(self):
+        u = UserHandler.get_user_by_id(1)
+        self.assertIsNone(u.password)
+
+    def test_get_user_by_email_should_not_return_password(self):
+        UserHandler._email_validation = self.factory.email_validation
+        u = UserHandler.get_user_by_email('email')
+        self.assertIsNone(u.password)
