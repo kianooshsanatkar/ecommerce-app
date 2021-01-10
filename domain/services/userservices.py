@@ -1,7 +1,7 @@
 from core.exceptions import ValueException
 from domain.models import User
 from domain.services.addressservice import address_validation
-from domain.services.contactservices import email_validation, phone_validation
+from domain.services.contactservice import email_validation, phone_validation
 from domain.services.passwordservice import password_validation
 
 
