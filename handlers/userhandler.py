@@ -52,3 +52,13 @@ class UserHandler:
             raise AuthenticationException("Wrong Password!")
         raise ValueException("Invalid email address value!")
 
+    @classmethod
+    def log_in_by_phone(cls, phone: str, password: str) -> User:
+        if cls._phone_validation(phone):
+            session = cls._Session()
+            user = session.query(User).filter_by(phone=phone).first()
+            if cls._password_service.password_verification(user.password, password):
+                user.password = None
+                return user
+            raise AuthenticationException("Wrong Password!")
+        raise ValueException("Invalid phone value!")

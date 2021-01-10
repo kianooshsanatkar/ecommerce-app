@@ -99,7 +99,36 @@ class CreateUserHandlerTest(TestCase):
         UserHandler._Session().query().filter_by().first = Mock(return_value=user)
         u = UserHandler.log_in_by_email('email', 'password')
         UserHandler._email_validation.assert_called_once()
-        UserHandler._password_service.password_verification.assert_called_once()
+        UserHandler._password_service.password_verification.assert_called()
         self.factory.session.assert_called()
         self.factory.session().query.assert_called()
         self.assertEqual(user, u)
+
+
+    def test_log_in_by_phone_raise_exception_wrong_email_address(self):
+        UserHandler._phone_validation = Mock(return_value=False)
+        with self.assertRaises(ValueException) as _ex:
+            UserHandler.log_in_by_phone('9121234567', 'password')
+        self.assertEqual("Invalid phone value!", str(_ex.exception))
+
+    def test_log_in_by_phone_raise_exception_wrong_password(self):
+        UserHandler._phone_validation = Mock(return_value=True)
+        UserHandler._password_service = Mock()
+        UserHandler._password_service.password_verification = Mock(return_value=False)
+        with self.assertRaises(AuthenticationException) as _ex:
+            UserHandler.log_in_by_phone('9121234567', 'password')
+        self.assertEqual("Wrong Password!", str(_ex.exception))
+
+    def test_log_in_by_phone_valid_return_user(self):
+        UserHandler._phone_validation = Mock(return_value=True)
+        UserHandler._password_service = Mock()
+        user = Mock()
+        UserHandler._Session().query().filter_by().first = Mock(return_value=user)
+        u = UserHandler.log_in_by_phone('email', 'password')
+        UserHandler._phone_validation.assert_called_once()
+        UserHandler._password_service.password_verification.assert_called()
+        self.factory.session.assert_called()
+        self.factory.session().query.assert_called()
+        self.assertEqual(user, u)
+
+
