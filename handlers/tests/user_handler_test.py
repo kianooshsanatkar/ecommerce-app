@@ -104,7 +104,6 @@ class CreateUserHandlerTest(TestCase):
         self.factory.session().query.assert_called()
         self.assertEqual(user, u)
 
-
     def test_log_in_by_phone_raise_exception_wrong_email_address(self):
         UserHandler._phone_validation = Mock(return_value=False)
         with self.assertRaises(ValueException) as _ex:
@@ -130,5 +129,3 @@ class CreateUserHandlerTest(TestCase):
         self.factory.session.assert_called()
         self.factory.session().query.assert_called()
         self.assertEqual(user, u)
-
-
