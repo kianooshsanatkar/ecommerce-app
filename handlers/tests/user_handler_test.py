@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from unittest import TestCase
 from unittest.mock import Mock
 
-from core.exceptions import TypeException
+from core.exceptions import TypeException, AuthenticationException, ValueException
 from handlers.userhandler import UserHandler
 
 
@@ -77,3 +77,29 @@ class CreateUserHandlerTest(TestCase):
         UserHandler._email_validation = self.factory.email_validation
         u = UserHandler.get_user_by_email('email')
         self.assertIsNone(u.password)
+
+    def test_log_in_by_email_raise_exception_wrong_email_address(self):
+        UserHandler._email_validation = Mock(return_value=False)
+        with self.assertRaises(ValueException) as _ex:
+            UserHandler.log_in_by_email('email', 'password')
+        self.assertEqual("Invalid email address value!", str(_ex.exception))
+
+    def test_log_in_by_email_raise_exception_wrong_password(self):
+        UserHandler._email_validation = Mock(return_value=True)
+        UserHandler._password_service = Mock()
+        UserHandler._password_service.password_verification = Mock(return_value=False)
+        with self.assertRaises(AuthenticationException) as _ex:
+            UserHandler.log_in_by_email('email', 'password')
+        self.assertEqual("Wrong Password!", str(_ex.exception))
+
+    def test_log_in_by_email_valid_return_user(self):
+        UserHandler._email_validation = Mock(return_value=True)
+        UserHandler._password_service = Mock()
+        user = Mock()
+        UserHandler._Session().query().filter_by().first = Mock(return_value=user)
+        u = UserHandler.log_in_by_email('email', 'password')
+        UserHandler._email_validation.assert_called_once()
+        UserHandler._password_service.password_verification.assert_called_once()
+        self.factory.session.assert_called()
+        self.factory.session().query.assert_called()
+        self.assertEqual(user, u)

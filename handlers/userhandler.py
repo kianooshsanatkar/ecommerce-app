@@ -1,15 +1,17 @@
-from core.exceptions import TypeException
+from core.exceptions import TypeException, AuthenticationException, ValueException
 from domain.models import DBInitializer
 from domain.models import User
-from domain.services import user_validation, email_validation
-from domain.services.passwordservice import hashing_password
+from domain.services import passwordservice
+from domain.services import user_validation, email_validation, phone_validation
 
 
 class UserHandler:
     _Session = DBInitializer.get_session
     _user_validation = user_validation
     _email_validation = email_validation
-    _hashing = hashing_password
+    _phone_validation = phone_validation
+    _password_service = passwordservice
+    _hashing = _password_service.hashing_password
 
     @classmethod
     def get_user_by_id(cls, uid: int) -> User:
@@ -38,3 +40,15 @@ class UserHandler:
             session.add(user)
             session.commit()
         return user.uid
+
+    @classmethod
+    def log_in_by_email(cls, email: str, password: str) -> User:
+        if cls._email_validation(email):
+            session = cls._Session()
+            user = session.query(User).filter_by(email=email).first()
+            if cls._password_service.password_verification(user.password, password):
+                user.password = None
+                return user
+            raise AuthenticationException("Wrong Password!")
+        raise ValueException("Invalid email address value!")
+
