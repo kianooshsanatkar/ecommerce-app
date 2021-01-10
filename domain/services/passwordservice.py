@@ -1,3 +1,5 @@
+__all__ = ['hashing_password', 'password_verification', 'password_validation', 'is_it_hashed']
+
 import re
 
 from passlib.hash import pbkdf2_sha256 as sha256
@@ -21,6 +23,8 @@ def password_validation(password: str):
 
 
 def password_verification(origin_password, entered_password: str):
+    if is_it_hashed(entered_password):
+        raise AuthenticationException("Entered Password is hashed!")
     if sha256.verify(entered_password, origin_password):
         return True
     raise AuthenticationException('Entered password is wrong!')

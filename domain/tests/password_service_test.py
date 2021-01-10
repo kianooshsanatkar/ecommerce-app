@@ -40,6 +40,14 @@ class PasswordServiceTest(TestCase):
             password_verification(hashed_pass, "something else")
         self.assertEqual("Entered password is wrong!", str(_ex.exception))
 
+    def test_verification_password_raise_exception_if_entered_password_is_hashed(self):
+        password = "Pa$$w0rd"
+        hashed_pass1 = pbkdf2_sha256.hash(password)
+        hashed_pass2 = pbkdf2_sha256.hash(password)
+        with self.assertRaises(AuthenticationException) as _ex:
+            self.assertTrue(password_verification(hashed_pass1, hashed_pass2))
+        self.assertEqual("Entered Password is hashed!", str(_ex.exception))
+
     def test_verification_password(self):
         password = "Pa$$w0rd"
         hashed_pass = pbkdf2_sha256.hash(password)
