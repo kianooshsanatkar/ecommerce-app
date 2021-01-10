@@ -9,8 +9,9 @@ class User(Base, Entity):
     __tablename__ = 'users'
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
-    phone = Column(String, unique=True)
     email = Column(String, unique=True)
+    phone = Column(String, unique=True)
+    password = Column(String, nullable=False)
     addresses = relationship("Address", backref="users")
 
     def __repr__(self):
