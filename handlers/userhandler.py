@@ -1,8 +1,8 @@
 from core.exceptions import TypeException, AuthenticationException, ValueException
 from domain.models import DBInitializer
 from domain.models import User
-from domain.services import passwordservice
-from domain.services import user_validation, email_validation, phone_validation
+from domain.models.user import Address
+from domain.services import user_validation, email_validation, phone_validation, passwordservice, address_validation
 
 
 class UserHandler:
@@ -12,6 +12,7 @@ class UserHandler:
     _phone_validation = phone_validation
     _password_service = passwordservice
     _hashing = _password_service.hashing_password
+    _address_validation = address_validation
 
     @classmethod
     def get_user_by_id(cls, uid: int) -> User:
@@ -78,3 +79,19 @@ class UserHandler:
         session.commit()
         user.password = None
         return user
+
+    @classmethod
+    def add_address(cls, uid, address: Address):
+        session = cls._Session()
+        user = session.query(User).get(uid)
+        if not user:
+            raise ValueException(f"there is no user with this id: {uid}")
+        cls._address_validation(address)
+        user.addresses.append(address)
+        session.commit()
+        return True
+
+    @classmethod
+    def get_address_by_id(cls, uid):
+        session = cls._Session()
+        return session.query(Address).get(uid)

@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 from unittest import TestCase
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.session import close_all_sessions
 
-from core.exceptions import AuthenticationException
+from core.exceptions import AuthenticationException, ValueException
 from domain.models import User
 from domain.models import db_Base as Base, DBInitializer
+from domain.models.user import Address
 from domain.services import user_validation, email_validation, passwordservice
 from domain.services.passwordservice import hashing_password
 from handlers import UserHandler
@@ -132,3 +134,40 @@ class UserTest(TestCase):
         self.assertEqual('new name', u.first_name)
         self.assertEqual('new last name', u.last_name)
 
+    def test_add_address_to_user_addresses(self):
+        user = User(password='Pa$$w0rd', first_name='first name', last_name='last name', phone='9121234567',
+                    email='email@domain.tld')
+        UserHandler.create_user(user)
+
+        # region Succeed Scenario
+        address = Address(province='tehran', city='tehran', zip_code='1' * 10,
+                          postal_address='somewhere in tehran')
+        result = UserHandler.add_address(user.uid, address)
+        self.assertTrue(result)
+        add = UserHandler.get_address_by_id(address.uid)
+        self.assertEqual(address.province, add.province)
+        self.assertEqual(address.city, add.city)
+        self.assertEqual(address.zip_code, add.zip_code)
+        self.assertEqual(address.postal_address, add.postal_address)
+        # endregion
+
+        # region Failed Scenario
+        new_address = Address(city='tehran', zip_code='1' * 10,
+                              postal_address='somewhere in tehran')
+        with self.assertRaises(ValueException):
+            UserHandler.add_address(user.uid, new_address)
+
+        new_address = Address(province='tehran', zip_code='1' * 10,
+                              postal_address='somewhere in tehran')
+        with self.assertRaises(ValueException):
+            UserHandler.add_address(user.uid, new_address)
+
+        new_address = Address(province='tehran', city='tehran', zip_code='0123456789')
+        with self.assertRaises(ValueException):
+            UserHandler.add_address(user.uid, new_address)
+
+        new_address = Address(province='tehran', city='tehran', postal_address='somewhere in tehran')
+        with self.assertRaises(ValueException) as _ex:
+            UserHandler.add_address(12345, new_address)
+        self.assertEqual("there is no user with this id: 12345", str(_ex.exception))
+        # endregion
