@@ -7,7 +7,7 @@ from domain.services import address_validation
 
 @dataclass(frozen=True)
 class MockAddress:
-    provinces: str
+    province: str
     city: str
     zip_code: str
     postal_address: str
@@ -48,7 +48,3 @@ class AddressValidationTest(TestCase):
                           lambda: address_validation(
                               MockAddress('province', 'city', '0123456789', 'a' * 512, 1)))
 
-    def test_address_raise_value_exception_no_user_id(self):
-        self.assertRaises(ValueException,
-                          lambda: address_validation(
-                              MockAddress('province', 'city', '0123456789', 'postal address', None)))
