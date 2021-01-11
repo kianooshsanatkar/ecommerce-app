@@ -35,7 +35,7 @@ class UserHandler:
 
     @classmethod
     def create_user(cls, user: User) -> int:
-        if (cls._user_validation(user)):
+        if cls._user_validation(user):
             user.password = cls._hashing(user.password)
             session = cls._Session()
             session.add(user)
