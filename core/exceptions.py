@@ -16,3 +16,7 @@ class AuthenticationException(InnerException):
 
 class SecurityException(InnerException):
     pass
+
+
+class TimeoutException(InnerException):
+    pass
