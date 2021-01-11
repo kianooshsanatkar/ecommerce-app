@@ -19,9 +19,10 @@ class UserHandler:
         if not isinstance(uid, int):
             raise TypeException("uid parameter type must be int!")
         session = cls._Session()
-        user = session.query(User).get(uid)
-        user.password = None
-        return user
+        u = session.query(User).get(uid)
+        if not u:
+            return None
+        return User(uid=u.uid, first_name=u.first_name, last_name=u.last_name, email=u.email, phone=u.phone)
 
     @classmethod
     def get_user_by_email(cls, email: str) -> User:
