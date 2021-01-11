@@ -46,6 +46,8 @@ class UserHandler:
         if cls._email_validation(email):
             session = cls._Session()
             user = session.query(User).filter_by(email=email).first()
+            if not user:
+                raise AuthenticationException("Wrong Email Address!")
             if cls._password_service.password_verification(user.password, password):
                 user.password = None
                 return user
@@ -57,6 +59,8 @@ class UserHandler:
         if cls._phone_validation(phone):
             session = cls._Session()
             user = session.query(User).filter_by(phone=phone).first()
+            if not user:
+                raise AuthenticationException("Wrong Phone Number!")
             if cls._password_service.password_verification(user.password, password):
                 user.password = None
                 return user

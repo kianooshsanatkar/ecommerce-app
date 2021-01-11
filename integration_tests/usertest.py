@@ -68,3 +68,59 @@ class UserTest(TestCase):
         # check if password is null
         self.assertIsNone(u.password)
 
+    def test_log_in_by_email(self):
+        pss = 'Pa$$w0rd'
+        user = User(password=pss, first_name='first name', last_name='last name', phone='9121234567',
+                    email='email@domain.tld')
+        UserHandler.create_user(user)
+
+        # region check failed scenario
+        with self.assertRaises(AuthenticationException) as _ex:
+            UserHandler.log_in_by_email(user.email, user.password)
+        with self.assertRaises(AuthenticationException) as _ex:
+            UserHandler.log_in_by_email(user.email, 'wrong password')
+        self.assertEqual('Entered password is wrong!', str(_ex.exception))
+        with self.assertRaises(AuthenticationException) as _ex:
+            UserHandler.log_in_by_email('wrong_email@domain.tld', pss)
+        self.assertEqual('Wrong Email Address!', str(_ex.exception))
+        # endregion
+
+        # region check succeed scenario
+        u = UserHandler.log_in_by_email(user.email, pss)
+        # assert user properties with origin properties
+        self.assertEqual(user.first_name, u.first_name)
+        self.assertEqual(user.last_name, u.last_name)
+        self.assertEqual(user.phone, u.phone)
+        self.assertEqual(user.email, u.email)
+        # check if password is null
+        self.assertIsNone(u.password)
+        # endregion
+
+    def test_log_in_by_phone(self):
+        pss = 'Pa$$w0rd'
+        user = User(password=pss, first_name='first name', last_name='last name', phone='9121234567',
+                    email='email@domain.tld')
+        UserHandler.create_user(user)
+
+        # region check failed scenario
+        with self.assertRaises(AuthenticationException) as _ex:
+            UserHandler.log_in_by_phone(user.phone, user.password)
+        with self.assertRaises(AuthenticationException) as _ex:
+            UserHandler.log_in_by_phone(user.phone, 'wrong password')
+        self.assertEqual('Entered password is wrong!', str(_ex.exception))
+        with self.assertRaises(AuthenticationException) as _ex:
+            UserHandler.log_in_by_phone('9121234561', pss)
+        self.assertEqual('Wrong Phone Number!', str(_ex.exception))
+        # endregion
+
+        # region check succeed scenario
+        u = UserHandler.log_in_by_phone(user.phone, pss)
+        # assert user properties with origin properties
+        self.assertEqual(user.first_name, u.first_name)
+        self.assertEqual(user.last_name, u.last_name)
+        self.assertEqual(user.phone, u.phone)
+        self.assertEqual(user.email, u.email)
+        # check if password is null
+        self.assertIsNone(u.password)
+        # endregion
+
