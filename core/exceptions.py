@@ -14,6 +14,10 @@ class AuthenticationException(InnerException):
     pass
 
 
+class AuthorizationException(InnerException):
+    pass
+
+
 class SecurityException(InnerException):
     pass
 
