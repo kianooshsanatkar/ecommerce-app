@@ -12,3 +12,7 @@ class TypeException(InnerException, TypeError):
 
 class AuthenticationException(InnerException):
     pass
+
+
+class SecurityException(InnerException):
+    pass
