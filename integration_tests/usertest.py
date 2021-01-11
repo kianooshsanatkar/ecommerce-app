@@ -124,3 +124,11 @@ class UserTest(TestCase):
         self.assertIsNone(u.password)
         # endregion
 
+    def test_user_change_info(self):
+        user = User(password='Pa$$w0rd', first_name='first name', last_name='last name', phone='9121234567',
+                    email='email@domain.tld')
+        UserHandler.create_user(user)
+        u = UserHandler.update_user_info(user.uid, 'new name', 'new last name')
+        self.assertEqual('new name', u.first_name)
+        self.assertEqual('new last name', u.last_name)
+

@@ -66,3 +66,15 @@ class UserHandler:
                 return user
             raise AuthenticationException("Wrong Password!")
         raise ValueException("Invalid phone value!")
+
+    @classmethod
+    def update_user_info(cls, uid: int, first_name: str = None, last_name: str = None) -> User:
+        session = cls._Session()
+        user = session.query(User).get(uid)
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+        session.commit()
+        user.password = None
+        return user
