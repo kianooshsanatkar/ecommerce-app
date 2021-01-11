@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 from unittest import TestCase
 
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.session import close_all_sessions
 
-from core.exceptions import AuthenticationException, ValueException
+from core.exceptions import AuthenticationException, ValueException, SecurityException
 from domain.models import User
 from domain.models import db_Base as Base, DBInitializer
 from domain.models.user import Address
@@ -170,4 +169,29 @@ class UserTest(TestCase):
         with self.assertRaises(ValueException) as _ex:
             UserHandler.add_address(12345, new_address)
         self.assertEqual("there is no user with this id: 12345", str(_ex.exception))
+        # endregion
+
+    def test_change_password(self):
+        pss = 'Pa$$w0rd'
+        user = User(password=pss, first_name='first name', last_name='last name', phone='9121234567',
+                    email='email@domain.tld')
+        UserHandler.create_user(user)
+
+        # region check failed scenario
+        with self.assertRaises(SecurityException) as _ex:
+            UserHandler.change_password(0, pss, 'Pa$$w)rd1')
+            self.assertEqual("user doesn't exist!", str(_ex.exception))
+        with self.assertRaises(AuthenticationException) as _ex:
+            UserHandler.change_password(user.uid, 'another Pa$$w0rd', 'Pa$$w)rd1')
+        self.assertEqual('Entered password is wrong!', str(_ex.exception))
+        with self.assertRaises(ValueException) as _ex:
+            UserHandler.change_password(user.uid, pss, 'pass')
+        self.assertEqual('Entered password is not valid!', str(_ex.exception))
+        # endregion
+
+        # region check succeed scenario
+        new_pss = 'NEW pa$$w0rd'
+        UserHandler.change_password(user.uid, pss, new_pss)
+        u = UserHandler.log_in_by_email(user.email, new_pss)
+        self.assertEqual(user.uid, u.uid)
         # endregion

@@ -129,3 +129,18 @@ class CreateUserHandlerTest(TestCase):
         self.factory.session.assert_called()
         self.factory.session().query.assert_called()
         self.assertEqual(user, u)
+
+    def test_change_password_error_wrong_password(self):
+        UserHandler._password_service = Mock()
+        UserHandler._password_service.password_verification = Mock(return_value=False)
+        with self.assertRaises(AuthenticationException) as _ex:
+            UserHandler.change_password(0, '', '')
+        self.assertEqual('Wrong Password!', str(_ex.exception))
+
+    def test_change_password_error_not_valid_password(self):
+        UserHandler._password_service = Mock()
+        UserHandler._password_service.password_verification = Mock(return_value=True)
+        UserHandler._password_service.password_validation = Mock(return_value=False)
+        with self.assertRaises(ValueException) as _ex:
+            UserHandler.change_password(0, '', '')
+        self.assertEqual('Entered password is not valid!', str(_ex.exception))

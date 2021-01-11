@@ -1,4 +1,4 @@
-from core.exceptions import TypeException, AuthenticationException, ValueException
+from core.exceptions import TypeException, AuthenticationException, ValueException, SecurityException
 from domain.models import DBInitializer
 from domain.models import User
 from domain.models.user import Address
@@ -95,3 +95,18 @@ class UserHandler:
     def get_address_by_id(cls, uid):
         session = cls._Session()
         return session.query(Address).get(uid)
+
+    @classmethod
+    def change_password(cls, user_id, old_password, new_password):
+        session = cls._Session()
+        user = session.query(User).get(user_id)
+        if not user:
+            raise SecurityException("User doesn't exist!")
+        if not cls._password_service.password_verification(user.password, old_password):
+            raise AuthenticationException("Wrong Password!")
+        if not cls._password_service.password_validation(new_password):
+            raise ValueException("Entered password is not valid!")
+        pss = cls._password_service.hashing_password(new_password)
+        user.password = pss
+        session.commit()
+        return True
