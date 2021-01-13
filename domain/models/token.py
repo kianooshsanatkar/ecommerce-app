@@ -15,8 +15,12 @@ class Token(Entity, Base):
     url_token = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('users.uid'), nullable=False)
     user = relationship('User', backref='tokens')
-    requested_time = Column(DateTime, nullable=False)
+    requested_time = Column(DateTime, nullable=False, default=datetime.utcnow())
     time_limit = Column(DateTime, nullable=False, default=datetime.utcnow() + TIME_SPAN)
     failed_attempts = Column(Integer, nullable=False, default=0)
     last_used_time = Column(DateTime, nullable=True)
     deactivate = Column(Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return ("Token(%r, %r, %r, %r, %r)"
+              % (self.user_id, self.requested_time, self.failed_attempts, self.last_used_time,self.deactivate))
