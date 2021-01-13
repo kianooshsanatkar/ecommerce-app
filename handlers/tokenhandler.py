@@ -5,7 +5,7 @@ from enum import Enum
 from sqlalchemy import desc
 
 from core.exceptions import SecurityException, TimeoutException, AuthenticationException, InnerException
-from domain.models import DBInitializer
+from domain.models import DBInitializer, User
 from domain.models import Token
 from handlers import UserHandler
 
@@ -43,6 +43,8 @@ class TokenHandler:
     def hexadecimal_token_validation(cls, user_id, auth_token: str) -> bool:
         session = cls._Session()
         token = session.query(Token).filter_by(user_id=user_id).order_by(desc(Token.requested_time)).first()
+        if not token:
+            raise SecurityException('User has no token!')
         if token.deactivate:
             raise SecurityException('Token is Deactivated!')
         if datetime.utcnow() > token.time_limit:
@@ -60,14 +62,14 @@ class TokenHandler:
         raise AuthenticationException('Token is not valid!')
 
     @classmethod
-    def url_token_validation(cls, token: str):
+    def url_token_validation(cls, url_token: str) -> User:
         session = cls._Session()
-        tk = session.query(Token).filter_by(url_token=token).first()
-        if not token:
+        tk = session.query(Token).filter_by(url_token=url_token).first()
+        if not tk:
             raise AuthenticationException('Url Token is not valid!')
         if tk.deactivate:
-            raise SecurityException('Token is deactivated!')
-        if datetime.utcnow() > tk.time_limite:
-            raise AuthenticationException('Token is Expired!')
+            raise SecurityException('Token is Deactivated!')
+        if datetime.utcnow() > tk.time_limit:
+            raise TimeoutException('Token is Expired!')
         tk.last_used_time = datetime.utcnow()
-        return tk.user()
+        return tk.user
