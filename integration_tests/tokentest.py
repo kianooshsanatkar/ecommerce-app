@@ -51,7 +51,7 @@ class TokenTest(TestCase):
         self.assertTrue(result)
         # get token
         session = TokenHandler._Session()
-        token = session.query(Token).first()
+        token = session.query(Token).one()
         # check the approximate requested_time
         self.assertTrue(datetime.utcnow() > token.requested_time > datetime.utcnow() - timedelta(minutes=1))
         self.assertTrue(token.time_limit > datetime.utcnow())
@@ -75,7 +75,7 @@ class TokenTest(TestCase):
     def test_verification_token(self):
         user, _ = self.generate_toke()
         session = DBInitializer.get_session()
-        token = session.query(Token).first()
+        token = session.query(Token).one()
 
         self.assertIsNone(token.last_used_time)
         result = TokenHandler.hexadecimal_token_validation(user.uid, token.hex_token)
@@ -122,7 +122,7 @@ class TokenTest(TestCase):
 
         # check deactivated token raise exception even for right Hex token
         session = DBInitializer.get_session()
-        token = session.query(Token).first()
+        token = session.query(Token).one()
         with self.assertRaises(SecurityException) as ex:
             TokenHandler.hexadecimal_token_validation(user.uid, token.hex_token)
         self.assertEqual('Token is Deactivated!', str(ex.exception))
@@ -138,7 +138,7 @@ class TokenTest(TestCase):
 
         # update it's database session with expired token
         session = DBInitializer.get_session()
-        token = session.query(Token).first()
+        token = session.query(Token).one()
         token.time_limit = datetime.utcnow() - timedelta(minutes=1)
         session.commit()
 
