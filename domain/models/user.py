@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, Integer
+from sqlalchemy import Column, String, ForeignKey, Integer, Date
 from sqlalchemy.orm import relationship
 
 from ._db import Base
@@ -9,6 +9,7 @@ class User(Base, Entity):
     __tablename__ = 'users'
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
+    birth = Column(Date, nullable=True)
     email = Column(String, unique=True)
     phone = Column(String, unique=True)
     password = Column(String, nullable=False)

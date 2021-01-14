@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from unittest import TestCase
 
 from sqlalchemy.orm import close_all_sessions
@@ -35,7 +36,7 @@ class UserTest(TestCase):
 
     def test_create_and_get_user(self):
         user = User(password='Pa$$w0rd', first_name='first name', last_name='last name', phone='9121234567',
-                    email='email@domain.tld')
+                    email='email@domain.tld', birth=datetime(1988, 1, 1).date())
         uid = UserHandler.create_user(user)
         u = UserHandler.get_user_by_id(uid)
         # assert user properties with origin properties
@@ -43,8 +44,23 @@ class UserTest(TestCase):
         self.assertEqual(user.last_name, u.last_name)
         self.assertEqual(user.phone, u.phone)
         self.assertEqual(user.email, u.email)
+        self.assertEqual(user.birth, u.birth)
         # check if password is null
         self.assertIsNone(u.password)
+
+    # this test can be deleted at anytime, this is a self experience, not related to any business of the application
+    def test_db_check_if_different_session_affect_entities(self):
+        session = DBInitializer.get_session()
+        user = User(password='Pa$$w0rd', first_name='first name', last_name='last name', phone='9121234567',
+                    email='email@domain.tld', birth=datetime(1988, 1, 1).date())
+        uid = UserHandler.create_user(user)
+        u = UserHandler.get_user_by_id(uid)
+        u.first_name = 'New_Name'
+        session.commit()
+        n_u = UserHandler.get_user_by_id(uid)
+        self.assertNotEqual(n_u.first_name, 'New_Name')
+        uu = session.query(User).get(u.uid)
+        self.assertIsNotNone(uu.password)
 
     def test_create_user_and_get_by_email(self):
         user = User(password='Pa$$w0rd', first_name='first name', last_name='last name', phone='9121234567',

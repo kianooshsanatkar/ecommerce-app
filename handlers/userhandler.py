@@ -24,7 +24,8 @@ class UserHandler:
         u = session.query(User).get(uid)
         if not u:
             raise ValueException(f"user with this id <{uid}> doesn't exist!")
-        return User(uid=u.uid, first_name=u.first_name, last_name=u.last_name, email=u.email, phone=u.phone)
+        u.password = None
+        return u
 
     @classmethod
     def get_user_by_email(cls, email: str) -> User:
