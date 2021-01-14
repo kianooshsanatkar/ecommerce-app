@@ -4,12 +4,13 @@ from unittest import TestCase
 from sqlalchemy.orm.session import close_all_sessions
 
 from core.exceptions import AuthenticationException, ValueException, SecurityException
-from domain.models import User
+from domain.models import User, Token
 from domain.models import db_Base as Base, DBInitializer
 from domain.models.user import Address
 from domain.services import user_validation, email_validation, passwordservice
 from domain.services.passwordservice import hashing_password
 from handlers import UserHandler
+from handlers.tokenhandler import TokenHandler, TokenVia
 
 
 @dataclass
@@ -35,6 +36,10 @@ class UserTest(TestCase):
         UserHandler._email_validation = email_validation
         UserHandler._hashing = hashing_password
         UserHandler._password_service = passwordservice
+
+        # reset token dependencies
+        TokenHandler._Session = DBInitializer.get_session
+        TokenHandler._get_user = UserHandler.get_user_by_id
 
     def setUp(self) -> None:
         Base.metadata.create_all(bind=DBInitializer.get_engine())
@@ -195,3 +200,40 @@ class UserTest(TestCase):
         u = UserHandler.log_in_by_email(user.email, new_pss)
         self.assertEqual(user.uid, u.uid)
         # endregion
+
+    @staticmethod
+    def create_user():
+        user = User(password='Pa$$w0rd', first_name='first name', last_name='last name', phone='9121234567',
+                    email='email@domain.tld')
+        UserHandler.create_user(user)
+        return user
+
+    def test_retrieve_password_by_email_and_phone(self):
+        user = self.create_user()
+        # ask for retrieve and
+        # save retrieve auth code to db
+        result = TokenHandler.generate_token(user.uid, TokenVia.both)
+        self.assertTrue(result)
+
+        # get tokens from db
+        session = DBInitializer.get_session()
+        token = session.query(Token).one()
+        session.close()
+        # fail scenario: if user does not exist
+        with self.assertRaises(SecurityException) as ex:
+            UserHandler.change_password_by_hex_token(0, token.hex_token, "New Pa$$w0rd1")
+        #       if url token is wrong
+        with self.assertRaises(AuthenticationException) as ex:
+            UserHandler.change_password_by_url_token("wrong url token", "New Pa$$w0rd1")
+        # change password
+        new_password = "New Pa$$w0rd"
+        result = UserHandler.change_password_by_hex_token(user.uid, token.hex_token, new_password)
+        self.assertTrue(result)
+        # check if password is really change
+        UserHandler.log_in_by_email(user.email, new_password)
+
+        # change password through url token
+        result = UserHandler.change_password_by_url_token(token.url_token, "New Pa$$w0rd1")
+        self.assertTrue(result)
+        # check if password is really change
+        UserHandler.log_in_by_email(user.email, "New Pa$$w0rd1")
