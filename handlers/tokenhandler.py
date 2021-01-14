@@ -7,7 +7,6 @@ from sqlalchemy import desc
 from core.exceptions import SecurityException, TimeoutException, AuthenticationException, InnerException
 from domain.models import DBInitializer, User
 from domain.models import Token
-from handlers import UserHandler
 
 
 class TokenVia(Enum):
@@ -18,11 +17,15 @@ class TokenVia(Enum):
 
 class TokenHandler:
     _Session = DBInitializer.get_session
-    _get_user = UserHandler.get_user_by_id
+
+    @staticmethod
+    def get_user(user_id):
+        from handlers import UserHandler
+        return UserHandler.get_user_by_id(user_id)
 
     @classmethod
     def generate_token(cls, user_id: int, via: TokenVia) -> bool:
-        u = cls._get_user(user_id)
+        u = cls.get_user(user_id)
         if not u:
             raise SecurityException("User doesn't exist!")
         session = cls._Session()
