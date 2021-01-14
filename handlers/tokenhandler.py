@@ -15,17 +15,18 @@ class TokenVia(Enum):
     both = 3
 
 
+def get_user_builder(user_id):
+    from handlers import UserHandler
+    return UserHandler.get_user_by_id(user_id)
+
+
 class TokenHandler:
     _Session = DBInitializer.get_session
-
-    @staticmethod
-    def get_user(user_id):
-        from handlers import UserHandler
-        return UserHandler.get_user_by_id(user_id)
+    _get_user = get_user_builder
 
     @classmethod
     def generate_token(cls, user_id: int, via: TokenVia) -> bool:
-        u = cls.get_user(user_id)
+        u = cls._get_user(user_id)
         if not u:
             raise SecurityException("User doesn't exist!")
         session = cls._Session()
