@@ -3,6 +3,7 @@ from domain.models import DBInitializer
 from domain.models import User
 from domain.models.user import Address
 from domain.services import user_validation, email_validation, phone_validation, passwordservice, address_validation
+from handlers.tokenhandler import TokenHandler
 
 
 class UserHandler:
@@ -13,6 +14,8 @@ class UserHandler:
     _password_service = passwordservice
     _hashing = _password_service.hashing_password
     _address_validation = address_validation
+    _hex_token_verification = TokenHandler.hexadecimal_token_validation
+    _url_token_verification = TokenHandler.url_token_validation
 
     @classmethod
     def get_user_by_id(cls, uid: int) -> User:
@@ -21,7 +24,7 @@ class UserHandler:
         session = cls._Session()
         u = session.query(User).get(uid)
         if not u:
-            return None
+            raise ValueException(f"user with this id <{uid}> doesn't exist!")
         return User(uid=u.uid, first_name=u.first_name, last_name=u.last_name, email=u.email, phone=u.phone)
 
     @classmethod
@@ -111,3 +114,27 @@ class UserHandler:
         user.password = pss
         session.commit()
         return True
+
+    @classmethod
+    def change_password_by_hex_token(cls, user_id, hex_token, new_password):
+        if not passwordservice.password_validation(new_password):
+            raise ValueException("Password is not valid!")
+        if cls._hex_token_verification(user_id, hex_token):
+            session = cls._Session()
+            user = session.query(User).get(user_id)
+            user.password = cls._password_service.hashing_password(new_password)
+            session.commit()
+            return True
+        raise SecurityException("Token is not valid!")
+
+    @classmethod
+    def change_password_by_url_token(cls, url_token, new_password):
+        if not passwordservice.password_validation(new_password):
+            raise ValueException("Password is not valid!")
+        user_id = cls._url_token_verification(url_token).uid
+        session = cls._Session()
+        user = session.query(User).get(user_id)
+        user.password = passwordservice.hashing_password(new_password)
+        session.commit()
+        return True
+
