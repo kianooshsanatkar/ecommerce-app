@@ -1,21 +1,14 @@
 from dataclasses import dataclass
 from unittest import TestCase
 
-from sqlalchemy.orm.session import close_all_sessions
+from sqlalchemy.orm import close_all_sessions
 
 from core.exceptions import AuthenticationException, ValueException, SecurityException
 from domain.models import User, Token
 from domain.models import db_Base as Base, DBInitializer
-from domain.models.user import Address
-from domain.services import user_validation, email_validation, passwordservice
-from domain.services.passwordservice import hashing_password
 from handlers import UserHandler
 from handlers.tokenhandler import TokenHandler, TokenVia
-
-
-@dataclass
-class AddressDTO:
-    pass
+from integration_tests.helper import reset_user_handler_injection, reset_token_handler_injection
 
 
 @dataclass
@@ -24,22 +17,14 @@ class UserDTO:
     last_name: str = 'last name'
     email: str = 'email@domain.tld'
     phone: str = '9121234567'
-    addresses = []
 
 
 class UserTest(TestCase):
 
     @staticmethod
     def setUpClass():
-        UserHandler._Session = DBInitializer.get_session
-        UserHandler._user_validation = user_validation
-        UserHandler._email_validation = email_validation
-        UserHandler._hashing = hashing_password
-        UserHandler._password_service = passwordservice
-
-        # reset token dependencies
-        TokenHandler._Session = DBInitializer.get_session
-        TokenHandler._get_user = UserHandler.get_user_by_id
+        reset_user_handler_injection()
+        reset_token_handler_injection()
 
     def setUp(self) -> None:
         Base.metadata.create_all(bind=DBInitializer.get_engine())
@@ -137,44 +122,6 @@ class UserTest(TestCase):
         u = UserHandler.update_user_info(user.uid, 'new name', 'new last name')
         self.assertEqual('new name', u.first_name)
         self.assertEqual('new last name', u.last_name)
-
-    def test_add_address_to_user_addresses(self):
-        user = User(password='Pa$$w0rd', first_name='first name', last_name='last name', phone='9121234567',
-                    email='email@domain.tld')
-        UserHandler.create_user(user)
-
-        # region Succeed Scenario
-        address = Address(province='tehran', city='tehran', zip_code='1' * 10,
-                          postal_address='somewhere in tehran')
-        result = UserHandler.add_address(user.uid, address)
-        self.assertTrue(result)
-        add = UserHandler.get_address_by_id(address.uid)
-        self.assertEqual(address.province, add.province)
-        self.assertEqual(address.city, add.city)
-        self.assertEqual(address.zip_code, add.zip_code)
-        self.assertEqual(address.postal_address, add.postal_address)
-        # endregion
-
-        # region Failed Scenario
-        new_address = Address(city='tehran', zip_code='1' * 10,
-                              postal_address='somewhere in tehran')
-        with self.assertRaises(ValueException):
-            UserHandler.add_address(user.uid, new_address)
-
-        new_address = Address(province='tehran', zip_code='1' * 10,
-                              postal_address='somewhere in tehran')
-        with self.assertRaises(ValueException):
-            UserHandler.add_address(user.uid, new_address)
-
-        new_address = Address(province='tehran', city='tehran', zip_code='0123456789')
-        with self.assertRaises(ValueException):
-            UserHandler.add_address(user.uid, new_address)
-
-        new_address = Address(province='tehran', city='tehran', postal_address='somewhere in tehran')
-        with self.assertRaises(ValueException) as _ex:
-            UserHandler.add_address(12345, new_address)
-        self.assertEqual("there is no user with this id: 12345", str(_ex.exception))
-        # endregion
 
     def test_change_password(self):
         pss = 'Pa$$w0rd'
