@@ -7,9 +7,9 @@ from sqlalchemy.orm import close_all_sessions
 from core.exceptions import AuthenticationException, ValueException, SecurityException
 from domain.models import User, Token
 from domain.models import db_Base as Base, DBInitializer
-from handlers import UserHandler
-from handlers.tokenhandler import TokenHandler
 from domain.models.token import ExchangeMethods
+from domain.models.user import UserState
+from handlers import UserHandler
 from integration_tests.helper import reset_user_handler_injection, reset_token_handler_injection
 
 
@@ -201,3 +201,66 @@ class UserTest(TestCase):
         self.assertTrue(result)
         # check if password is really change
         UserHandler.log_in_by_email(user.email, "New Pa$$w0rd1")
+
+    def test_generate_user_and_verify_its_phone_by_hex_token(self):
+        # 1. (Phone) generate a user -> get token -> send token for verification -> check if verified
+
+        user_id = self.create_user().uid
+        user = UserHandler.get_user_by_id(user_id)
+        self.assertEqual(user.state, UserState.OBSCURE.value)
+        session = DBInitializer.get_session()
+        phone_token = session.query(Token).filter_by(exchange_method=ExchangeMethods.PHONE.value).one()
+        UserHandler.verify_user_phone_by_hex_token(user.uid, phone_token.hex_token)
+        user = UserHandler.get_user_by_id(user_id)
+        self.assertEqual(user.is_phone_verified, True)
+        self.assertEqual(UserState.PARTIALLY.value, user.state)
+
+    def test_generate_user_and_verify_its_phone_by_url_token(self):
+        # 1. (Phone) generate a user -> get token -> send token for verification -> check if verified
+
+        user_id = self.create_user().uid
+        session = DBInitializer.get_session()
+        phone_token = session.query(Token).filter_by(exchange_method=ExchangeMethods.PHONE.value).one()
+        UserHandler.verify_user_exchange_method_by_url_token(phone_token.url_token)
+        user = UserHandler.get_user_by_id(user_id)
+        self.assertEqual(user.is_phone_verified, True)
+        self.assertEqual(UserState.PARTIALLY.value, user.state)
+
+    def test_generate_user_and_verify_its_email_by_hex_token(self):
+        # 2. (Email) generate a user -> get token -> send token for verification -> check if verified
+        user_id = self.create_user().uid
+        session = DBInitializer.get_session()
+        email_token = session.query(Token).filter_by(exchange_method=ExchangeMethods.EMAIL.value).one()
+        UserHandler.verify_user_email_by_hex_token(user_id, email_token.hex_token)
+        user = UserHandler.get_user_by_id(user_id)
+        self.assertEqual(user.is_email_verified, True)
+        self.assertEqual(UserState.OBSCURE.value, user.state)
+
+    def test_generate_user_and_verify_its_email_by_url_token(self):
+        # 2. (Email) generate a user -> get token -> send token for verification -> check if verified
+        user_id = self.create_user().uid
+        session = DBInitializer.get_session()
+        email_token = session.query(Token).filter_by(exchange_method=ExchangeMethods.EMAIL.value).one()
+        UserHandler.verify_user_exchange_method_by_url_token(email_token.url_token)
+        user = UserHandler.get_user_by_id(user_id)
+        self.assertEqual(user.is_email_verified, True)
+        self.assertEqual(UserState.OBSCURE.value, user.state)
+
+    def test_generate_user_and_verify_its_email_and_phone(self):
+        user_id = self.create_user().uid
+        session = DBInitializer.get_session()
+        phone_token = session.query(Token).filter_by(exchange_method=ExchangeMethods.PHONE.value).one()
+        email_token = session.query(Token).filter_by(exchange_method=ExchangeMethods.EMAIL.value).one()
+        UserHandler.verify_user_phone_by_hex_token(user_id, phone_token.hex_token)
+        UserHandler.verify_user_exchange_method_by_url_token(email_token.url_token)
+        user = UserHandler.get_user_by_id(user_id)
+        self.assertEqual(user.is_email_verified, True)
+        self.assertEqual(user.is_phone_verified, True)
+        self.assertEqual(UserState.ACTIVE.value, user.state)
+
+    def generate_user_and_verify_its_exchanges_fail_scenario(self):
+        # I don't see any failed scenario
+        raise NotImplementedError()
+
+    def generate_user_and_check_all_of_its_state(self):
+        raise NotImplementedError()
