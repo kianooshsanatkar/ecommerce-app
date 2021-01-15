@@ -71,7 +71,7 @@ class TokenHandler:
         raise AuthenticationException('Token is not valid!')
 
     @classmethod
-    def url_token_validation(cls, url_token: str) -> tuple:
+    def url_token_validation(cls, url_token: str) -> ():
         session = cls._Session()
         tk = session.query(Token).filter_by(url_token=url_token).first()
         if not tk:

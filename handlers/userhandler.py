@@ -1,10 +1,10 @@
 from core.exceptions import TypeException, AuthenticationException, ValueException, SecurityException
 from domain.models import DBInitializer
 from domain.models import User
+from domain.models.token import ExchangeMethods
 from domain.services import user_validation, email_validation, phone_validation, passwordservice
 from domain.services.userservices import get_user_state
 from handlers.tokenhandler import TokenHandler
-from domain.models.token import ExchangeMethods
 
 
 class UserHandler:
@@ -56,20 +56,40 @@ class UserHandler:
         return user.uid
 
     @classmethod
-    def verify_user_email_by_hx_token(cls):
-        raise NotImplementedError()
+    def verify_user_email_by_hex_token(cls, user_id: int, hex_token: str):
+        session = cls._Session()
+        user = session.query(User).get(user_id)
+        if user.is_email_verified:
+            return True
+        if not TokenHandler.hexadecimal_token_validation(user_id, hex_token, ExchangeMethods.EMAIL):
+            return False
+        user.is_email_verified = True
+        user.state = get_user_state(user).value
+        session.commit()
 
     @classmethod
-    def verify_user_email_by_url_token(cls):
-        raise NotImplementedError()
+    def verify_user_phone_by_hex_token(cls, user_id: int, hex_token: str):
+        session = cls._Session()
+        user = session.query(User).get(user_id)
+        if user.is_phone_verified:
+            return True
+        if not TokenHandler.hexadecimal_token_validation(user_id, hex_token, ExchangeMethods.PHONE):
+            return False
+        user.is_phone_verified = True
+        user.state = get_user_state(user).value
+        session.commit()
 
     @classmethod
-    def verify_user_phone_by_hex_token(cls):
-        raise NotImplementedError()
-
-    @classmethod
-    def verify_user_phone_by_url_token(cls):
-        raise NotImplementedError()
+    def verify_user_exchange_method_by_url_token(cls, url_token: str):
+        user_id, ex_method = TokenHandler.url_token_validation(url_token)
+        session = cls._Session()
+        user = session.query(User).get(user_id)
+        if ex_method == ExchangeMethods.PHONE.value:
+            user.is_phone_verified = True
+        elif ex_method == ExchangeMethods.EMAIL.value:
+            user.is_email_verified = True
+        user.state = cls._get_user_state(user).value
+        session.commit()
 
     @classmethod
     def log_in_by_email(cls, email: str, password: str) -> User:
