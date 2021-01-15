@@ -1,5 +1,6 @@
 from core.exceptions import ValueException
 from domain.models import User
+from domain.models.user import UserState
 from domain.services.addressservice import address_validation
 from domain.services.contactservice import email_validation, phone_validation
 from domain.services.passwordservice import password_validation
@@ -24,5 +25,13 @@ def user_validation(user: User):
     return True
 
 
-
-
+def get_user_state(user: User):
+    if user.first_name and user.last_name and user.phone:
+        if user.is_phone_verified:
+            if user.email:
+                if user.is_email_verified:
+                    return UserState.ACTIVE
+                return UserState.PARTIALLY
+            return UserState.ACTIVE
+        return UserState.OBSCURE
+    return UserState.INCOMPLETE
