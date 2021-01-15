@@ -12,6 +12,7 @@ def reset_user_handler_injection():
     UserHandler._hashing = passwordservice.hashing_password
     UserHandler._password_service = passwordservice
     UserHandler._phone_validation = phone_validation
+    UserHandler._generate_token = TokenHandler.generate_token
 
 
 def reset_address_handler_injection():

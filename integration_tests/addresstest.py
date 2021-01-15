@@ -8,13 +8,14 @@ from domain.models import db_Base
 from domain.models.user import Address
 from handlers import UserHandler
 from handlers.addresshandler import AddressHandler
-from integration_tests.helper import reset_user_handler_injection
+from integration_tests.helper import reset_user_handler_injection, reset_token_handler_injection
 
 
 class AddressTest(TestCase):
     @staticmethod
     def setUpClass():
         reset_user_handler_injection()
+        reset_token_handler_injection()
 
     def setUp(self) -> None:
         db_Base.metadata.create_all(bind=DBInitializer.get_engine())

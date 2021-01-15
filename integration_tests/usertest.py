@@ -8,7 +8,8 @@ from core.exceptions import AuthenticationException, ValueException, SecurityExc
 from domain.models import User, Token
 from domain.models import db_Base as Base, DBInitializer
 from handlers import UserHandler
-from handlers.tokenhandler import TokenHandler, TokenVia
+from handlers.tokenhandler import TokenHandler
+from domain.models.token import ExchangeMethods
 from integration_tests.helper import reset_user_handler_injection, reset_token_handler_injection
 
 
@@ -172,15 +173,15 @@ class UserTest(TestCase):
         return user
 
     def test_retrieve_password_by_email_and_phone(self):
-        user = self.create_user()
+        user = User(password='Pa$$w0rd', first_name='first name', last_name='last name', phone='9121234567',
+                    email='email@domain.tld')
+        UserHandler.create_user(user)
         # ask for retrieve and
         # save retrieve auth code to db
-        result = TokenHandler.generate_token(user.uid, TokenVia.both)
-        self.assertTrue(result)
 
         # get tokens from db
         session = DBInitializer.get_session()
-        token = session.query(Token).one()
+        token = session.query(Token).filter_by(exchange_method=ExchangeMethods.PHONE.value).one()
         session.close()
         # fail scenario: if user does not exist
         with self.assertRaises(SecurityException) as ex:
