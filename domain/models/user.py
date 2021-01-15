@@ -1,8 +1,19 @@
-from sqlalchemy import Column, String, ForeignKey, Integer, Date
+from enum import Enum
+
+from sqlalchemy import Column, String, ForeignKey, Integer, Date, Boolean
 from sqlalchemy.orm import relationship
 
 from ._db import Base
 from .entity import Entity
+
+
+class UserState(Enum):
+    INCOMPLETE = 1
+    OBSCURE = 2
+    PARTIALLY = 3
+    ACTIVE = 4
+    DEACTIVATE = 5
+    RESTRICTED = 6
 
 
 class User(Base, Entity):
@@ -11,8 +22,11 @@ class User(Base, Entity):
     last_name = Column(String, nullable=True)
     birth = Column(Date, nullable=True)
     email = Column(String, unique=True)
+    is_email_verified = Column(Boolean, nullable=False, default=False)
     phone = Column(String, unique=True)
+    is_phone_verified = Column(Boolean, nullable=False, default=False)
     password = Column(String, nullable=False)
+    state = Column(Integer, nullable=False, default=1)
     addresses = relationship("Address", back_populates="user")
 
     def __repr__(self):
