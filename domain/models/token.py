@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+from enum import Enum
 
 from sqlalchemy import Column, String, DateTime, Integer, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
@@ -7,6 +8,11 @@ from domain.models._db import Base
 from domain.models.entity import Entity
 
 TIME_SPAN = timedelta(hours=1)
+
+
+class ExchangeMethods(Enum):
+    PHONE = 1
+    EMAIL = 2
 
 
 class Token(Entity, Base):
@@ -20,7 +26,8 @@ class Token(Entity, Base):
     failed_attempts = Column(Integer, nullable=False, default=0)
     last_used_time = Column(DateTime, nullable=True)
     deactivate = Column(Boolean, nullable=False, default=False)
+    exchange_method = Column(Integer, nullable=True)
 
     def __repr__(self):
         return ("Token(%r, %r, %r, %r, %r)"
-              % (self.user_id, self.requested_time, self.failed_attempts, self.last_used_time,self.deactivate))
+                % (self.user_id, self.requested_time, self.failed_attempts, self.last_used_time, self.deactivate))
