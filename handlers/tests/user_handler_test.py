@@ -20,6 +20,7 @@ class CreateUserHandlerTest(TestCase):
     def setUp(self) -> None:
         self.factory = Mock()
         UserHandler._Session = self.factory.session
+        UserHandler._generate_token = Mock()
 
     def test_get_user_by_id(self):
         # check if exception rises for the wrong data type
