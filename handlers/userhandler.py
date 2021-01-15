@@ -2,7 +2,9 @@ from core.exceptions import TypeException, AuthenticationException, ValueExcepti
 from domain.models import DBInitializer
 from domain.models import User
 from domain.services import user_validation, email_validation, phone_validation, passwordservice
+from domain.services.userservices import get_user_state
 from handlers.tokenhandler import TokenHandler
+from domain.models.token import ExchangeMethods
 
 
 class UserHandler:
@@ -12,9 +14,11 @@ class UserHandler:
     _phone_validation = phone_validation
     _password_service = passwordservice
     _hashing = _password_service.hashing_password
+    _get_user_state = get_user_state
 
     _hex_token_verification = TokenHandler.hexadecimal_token_validation
     _url_token_verification = TokenHandler.url_token_validation
+    _generate_token = TokenHandler.generate_token
 
     @classmethod
     def get_user_by_id(cls, uid: int) -> User:
@@ -41,10 +45,31 @@ class UserHandler:
     def create_user(cls, user: User) -> int:
         if cls._user_validation(user):
             user.password = cls._hashing(user.password)
+            user.state = cls._get_user_state(user).value
             session = cls._Session()
             session.add(user)
             session.commit()
+            if user.email:
+                cls._generate_token(user.uid, ExchangeMethods.EMAIL)
+            if user.phone:
+                cls._generate_token(user.uid, ExchangeMethods.PHONE)
         return user.uid
+
+    @classmethod
+    def verify_user_email_by_hx_token(cls):
+        raise NotImplementedError()
+
+    @classmethod
+    def verify_user_email_by_url_token(cls):
+        raise NotImplementedError()
+
+    @classmethod
+    def verify_user_phone_by_hex_token(cls):
+        raise NotImplementedError()
+
+    @classmethod
+    def verify_user_phone_by_url_token(cls):
+        raise NotImplementedError()
 
     @classmethod
     def log_in_by_email(cls, email: str, password: str) -> User:
@@ -115,7 +140,7 @@ class UserHandler:
     def change_password_by_url_token(cls, url_token, new_password):
         if not passwordservice.password_validation(new_password):
             raise ValueException("Password is not valid!")
-        user_id = cls._url_token_verification(url_token).uid
+        user_id, _ = cls._url_token_verification(url_token)
         session = cls._Session()
         user = session.query(User).get(user_id)
         user.password = passwordservice.hashing_password(new_password)
