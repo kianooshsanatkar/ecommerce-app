@@ -1,3 +1,3 @@
 # Numen Project
 
-E-commerce web basaed project for sale soups and scrubs and other sanitary and self-care home made products.
+E-commerce web basaed project for sale home made products.
